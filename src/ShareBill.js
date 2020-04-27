@@ -1,5 +1,14 @@
 import React from 'react';
-// var Decimal = require('decimal');
+
+function roundTo(n, digits) {
+  if (digits === undefined) {
+      digits = 0;
+  }
+
+  var multiplicator = Math.pow(10, digits);
+  n = parseFloat((n * multiplicator).toFixed(11));
+  return Math.round(n) / multiplicator;
+}
 
 class Member extends React.Component{
   constructor(props){
@@ -12,27 +21,25 @@ class Member extends React.Component{
     const onAddBill = props.onAddBill;
     const onChangeBill = props.onChangeBill;
     const onChangeName = props.onChangeName;
-    const bills = props.bills.map(num=> 
+    let bills = props.bills.map((num,index)=> 
       <td>
-        <input type="integer" name="number" value={num} min="0" onChange={onChangeBill}/>
+        <input type="number" value={num} step="0.1" min="0" onChange={(e)=>onChangeBill(index, e)}/>
       </td>
     );
+    bills.push(<td><input type="number" step="0.1" min="0" onChange={onAddBill}/></td>);
     let billPrice = 0;
-    props.bills.forEach(num => billPrice += num);
-    const ncols = (props.ncols);
-    //padding
-    for(let i=0; i<ncols-bills.length; ++i){
-      bills.push(<td></td>);
-    }
+    props.bills.forEach(num => billPrice += parseFloat(num));
+    const ncols = props.ncols;
+    const padding = Array(ncols-(bills.length-1)).fill(<td></td>);
     return (
       <tr>
         <button onClick={props.onDel} disabled={props.disabled}>-</button>
         <td><input type="text" value={name} onChange={onChangeName}/></td>
         {bills}
-        <td><input type="integer" min="0" onChange={onAddBill}/></td>
+        {padding}
         <td>{billPrice}</td>
-        <td>pay</td>
-        <td>discount</td>
+        <td>{props.pay}</td>
+        <td>{roundTo(billPrice-props.pay, 2)}</td>
       </tr>
     );
   }
@@ -49,15 +56,20 @@ function DummyMember(props){
 }
 
 function Summary(props){
+  const ncols = props.ncols;
   const sumBill = props.sumBill;
   const sumPay = props.sumPay;
-  const sumDiscount = sumBill - sumPay;
+  const sumDiscount = roundTo(sumBill - sumPay, 2);
+  const padding = Array(ncols+1).fill(<th></th>);
+  const onChangeSumPay = props.onChangeSumPay;
   return (
     <tr>
-      <td></td>
-      <td>{sumBill}</td>
-      <td>{sumPay}</td>
-      <td>{sumDiscount}</td>
+      <th></th>
+      <th>汇总</th>
+      {padding}
+      <th>{sumBill}</th>
+      <th><input type="number" value={sumPay==0?'':sumPay} step="0.1" min="0" onChange={onChangeSumPay} /></th>
+      <th>{sumDiscount}</th>
     </tr>
   );
 }
@@ -68,31 +80,28 @@ class ShareBill extends React.Component{
     this.state = {
       ncols: 0,
       members: [
-        {name:'谁', bills:[]}
+        {name:'自己', bills:[], pay:0}
       ],
       newMemberName: "",
       sumBill: 0,
       sumPay: 0,
     };
-
-    this.onAddMember = this.onAddMember.bind(this);
-    this.onDelMember = this.onDelMember.bind(this);
-    this.onAddMemberBill = this.onAddMemberBill.bind(this);
-    this.onChangeMemberName = this.onChangeMemberName.bind(this);
-    this.onChangeNewMemberName = this.onChangeNewMemberName.bind(this);
   }
 
   onAddMember(event){
     const value = event.target.value;
-    let members = this.state.members;
-    members.push({name:value, bills:[]});
-    this.setState({members: members, newMemberName: ""});
+    if(value){
+      let members = this.state.members;
+      members.push({name:value, bills:[]});
+      this.setState({members: members, newMemberName: "",});
+    }
   }
 
   onDelMember(index){
     let members = this.state.members;
     members.splice(index, 1);
-    this.setState({members: members});
+    let sumBill = this.sumBill();
+    this.setState({members: members, sumBill: sumBill});
   }
 
   onChangeNewMemberName(event){
@@ -107,58 +116,84 @@ class ShareBill extends React.Component{
     this.setState({members: members});
   }
 
-  sumBill(){
-    let sum = 0;
-    this.state.members.forEach(m=>m.bills.forEach(num=>sum+=num));
-    return sum;
-  }
+  updateBill(){
+      let members = this.state.members;
+      let sumBill = 0;
+      members.forEach(m=>m.bills.forEach(num=>sumBill+=num));
+      const sumPay = this.state.sumPay;
+      let sumDiscount = roundTo(sumBill - sumPay, 2);
+
+      for(let i=0; i<members.length; ++i){
+        let member = members[i];
+        let bill = 0;
+        member.bills.forEach(x=> bill+=x);
+        const weight = bill / sumBill;
+        const discount = roundTo(sumDiscount * weight, 2);
+        member.pay = roundTo(bill - discount, 2);
+      }
+      this.setState({members: members, sumBill: sumBill, sumDiscount: sumDiscount});
+    }
 
   onAddMemberBill(index, event){
     let members = this.state.members;
-    let member = members[index];
     const value = event.target.value;
-    if(value){
-      const num = parseInt(value);
-      member.bills.push(num);
-      let ncols = this.state.ncols;
-      ncols = Math.max(ncols, member.bills.length);
-      let sumBill = this.sumBill();
-      this.setState({members: members, ncols: ncols, sumBill: sumBill});
+    const num = parseFloat(value);
+    if(num > 0){
+        let member = members[index];
+        member.bills.push(num);
+        let ncols = this.state.ncols;
+        ncols = Math.max(ncols, member.bills.length);
+        this.setState({members: members, ncols: ncols});
+        this.updateBill();
     }
   }
 
-  onChangeMemberBill(index, event){
+  onChangeMemberBill(index, billIndex, event){
     const value = event.target.value;
     let members = this.state.members;
     let member = members[index];
     if(!value){
-      member.bills.splice(index, 1);
+      member.bills.splice(billIndex, 1);
       let ncols = 0;
       members.forEach(m => ncols = Math.max(ncols, m.bills.length));
-      let sumBill = this.sumBill();
-      this.setState({members: members, ncols: ncols, sumBill: sumBill});
+      this.setState({members: members, ncols: ncols});
     }
     else{
-      const num = parseInt(value);
-      member.bills[index] = num;
-      let sumBill = this.sumBill();
-      this.setState({members: members, sumBill: sumBill});
+      const num = parseFloat(value);
+      member.bills[billIndex] = num;
+      this.setState({members: members});
     }
+    this.updateBill();
+  }
+
+  onChangeSumPay(event){
+    const value = event.target.value;
+    const num = parseFloat(value);
+    if(num > 0){
+      this.state.sumPay = num;
+      this.setState({sumPay: num});
+    }
+    else{
+      this.state.sumPay = 0;
+      this.setState({sumPay: 0});
+    }
+    this.updateBill();
   }
 
   render(){
     const onlyOneMember = this.state.members.length <= 1;
-    const members = this.state.members.map(
+    let members = this.state.members.map(
       (m,index) =>
         <Member
           name={m.name}
           bills={m.bills}
           ncols={this.state.ncols}
-          onChangeName={(e)=>this.onChangeMemberName(index, e)}
-          onDel={(e)=>this.onDelMember(index, e)}
-          onAddBill={(e)=>this.onAddMemberBill(index, e)}
-          onChangeBill={(e)=>this.onChangeMemberBill(index, e)}
+          onChangeName={this.onChangeMemberName.bind(this, index)}
+          onDel={this.onDelMember.bind(this, index)}
+          onAddBill={this.onAddMemberBill.bind(this, index)}
+          onChangeBill={this.onChangeMemberBill.bind(this, index)}
           disabled={onlyOneMember}
+          pay={m.pay}
         />
     );
     return (
@@ -176,8 +211,17 @@ class ShareBill extends React.Component{
         </thead>
         <tbody>
           {members}
-          <DummyMember newMemberName={this.state.newMemberName} onChangeNewMemberName={(e)=>this.onChangeNewMemberName(e)} onAdd={this.onAddMember}/>
-          <Summary sumBill={this.state.sumBill} sumPay={this.state.sumPay}/>
+          <DummyMember 
+            newMemberName={this.state.newMemberName}
+            onChangeNewMemberName={this.onChangeNewMemberName.bind(this)}
+            onAdd={this.onAddMember.bind(this)}
+          />
+          <Summary 
+            ncols={this.state.ncols}
+            sumBill={this.state.sumBill}
+            sumPay={this.state.sumPay}
+            onChangeSumPay={this.onChangeSumPay.bind(this)}
+          />
         </tbody>
       </table>
       </div>
