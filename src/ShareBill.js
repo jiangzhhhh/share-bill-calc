@@ -100,8 +100,8 @@ class ShareBill extends React.Component{
   onDelMember(index){
     let members = this.state.members;
     members.splice(index, 1);
-    let sumBill = this.sumBill();
-    this.setState({members: members, sumBill: sumBill});
+    this.setState({members: members});
+    this.updateBill();
   }
 
   onChangeNewMemberName(event){
