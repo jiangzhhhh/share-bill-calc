@@ -1,20 +1,17 @@
 import React from 'react';
 
+// 四舍五入到指定小数位数
 function roundTo(n, digits) {
   if (digits === undefined) {
       digits = 0;
   }
 
-  var multiplicator = Math.pow(10, digits);
+  const multiplicator = Math.pow(10, digits);
   n = parseFloat((n * multiplicator).toFixed(11));
   return Math.round(n) / multiplicator;
 }
 
 class Member extends React.Component{
-  constructor(props){
-    super(props);
-  }
-
   render(){
     const props = this.props;
     const name = props.name;
@@ -170,11 +167,9 @@ class ShareBill extends React.Component{
     const value = event.target.value;
     const num = parseFloat(value);
     if(num > 0){
-      this.state.sumPay = num;
       this.setState({sumPay: num});
     }
     else{
-      this.state.sumPay = 0;
       this.setState({sumPay: 0});
     }
     this.updateBill();
