@@ -1,19 +1,10 @@
 {
   "files": {
-    "main.js": "/share-bill-calc/static/js/main.ea9c7a7a.chunk.js",
-    "main.js.map": "/share-bill-calc/static/js/main.ea9c7a7a.chunk.js.map",
-    "runtime-main.js": "/share-bill-calc/static/js/runtime-main.32efbfa1.js",
-    "runtime-main.js.map": "/share-bill-calc/static/js/runtime-main.32efbfa1.js.map",
-    "static/js/2.3c536965.chunk.js": "/share-bill-calc/static/js/2.3c536965.chunk.js",
-    "static/js/2.3c536965.chunk.js.map": "/share-bill-calc/static/js/2.3c536965.chunk.js.map",
+    "main.js": "/share-bill-calc/static/js/main.d34b5418.js",
     "index.html": "/share-bill-calc/index.html",
-    "precache-manifest.d1484ea4f434bac889796f2617d4d4ce.js": "/share-bill-calc/precache-manifest.d1484ea4f434bac889796f2617d4d4ce.js",
-    "service-worker.js": "/share-bill-calc/service-worker.js",
-    "static/js/2.3c536965.chunk.js.LICENSE.txt": "/share-bill-calc/static/js/2.3c536965.chunk.js.LICENSE.txt"
+    "main.d34b5418.js.map": "/share-bill-calc/static/js/main.d34b5418.js.map"
   },
   "entrypoints": [
-    "static/js/runtime-main.32efbfa1.js",
-    "static/js/2.3c536965.chunk.js",
-    "static/js/main.ea9c7a7a.chunk.js"
+    "static/js/main.d34b5418.js"
   ]
 }
