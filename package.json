@@ -30,7 +30,7 @@
     ]
   },
   "devDependencies": {
-    "gh-pages": "^2.2.0",
+    "gh-pages": "^5.0.0",
     "react-scripts": "^5.0.1"
   },
   "homepage": "http://jiangzhhhh.github.io/share-bill-calc"
